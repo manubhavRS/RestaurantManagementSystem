@@ -9,26 +9,32 @@ import (
 	"net/http"
 	"restaurantManagementSystem/database/helper"
 	"restaurantManagementSystem/models/userModels"
+	"restaurantManagementSystem/utilities"
 	"time"
 )
 
-const secretkey string = "SuperSecretKey"
-const ContextUserKey string = "user"
-const ContextRefreshToken string = "refreshToken"
-
 func UserFromContext(ctx context.Context) *userModels.UserModel {
-	return ctx.Value(ContextUserKey).(*userModels.UserModel)
+	return ctx.Value(utilities.ContextUserKey).(*userModels.UserModel)
 }
 func TokenFromContext(ctx context.Context) string {
-	return ctx.Value(ContextRefreshToken).(string)
+	return ctx.Value(utilities.ContextRefreshToken).(string)
 }
 
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rec *statusRecorder) WriteHeader(code int) {
+	rec.status = code
+	rec.ResponseWriter.WriteHeader(code)
+}
 func GenerateJWT(user userModels.UserModel) (string, error) {
-	var mySigningKey = []byte(secretkey)
+	var mySigningKey = []byte(utilities.Secretkey)
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = user.ID
-	claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
+	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
 
 	tokenString, err := token.SignedString(mySigningKey)
 	if err != nil {
@@ -45,7 +51,7 @@ func JWTAuthMiddleware(handler http.Handler) http.Handler {
 			return
 		}
 
-		var mySigningKey = []byte(secretkey)
+		var mySigningKey = []byte(utilities.Secretkey)
 
 		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
 			_, ok := token.Method.(*jwt.SigningMethodHMAC)
@@ -84,23 +90,31 @@ func JWTAuthMiddleware(handler http.Handler) http.Handler {
 			return
 		}
 		users.Location = locations
-		refreshToken, err := GenerateJWT(*users)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		log.Printf("Refresh Token: " + refreshToken)
-		ctx := context.WithValue(r.Context(), ContextUserKey, users)
+		log.Printf(r.RequestURI)
 		log.Printf("JWT Token verified...")
-		w.Header().Set("Content-Type", "application/json")
-		resp := make(map[string]string)
-		resp["RefreshToken"] = refreshToken
-		jsonResponse, err := json.Marshal(resp)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+
+		ctx := context.WithValue(r.Context(), utilities.ContextUserKey, users)
+		rec := statusRecorder{w, 200}
+		handler.ServeHTTP(&rec, r.WithContext(ctx))
+		if rec.status == 200 {
+
+			log.Printf(fmt.Sprint(claims["exp"]))
+			refreshToken, err := GenerateJWT(*users)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			log.Printf("Refresh Token: " + refreshToken)
+			w.Header().Set("Content-Type", "application/json")
+			resp := make(map[string]string)
+			resp["RefreshToken"] = refreshToken
+			jsonResponse, err := json.Marshal(resp)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Write(jsonResponse)
 		}
-		w.Write(jsonResponse)
-		handler.ServeHTTP(w, r.WithContext(ctx))
+
 	})
 }

@@ -13,22 +13,26 @@ func FetchSpecificDishes(writer http.ResponseWriter, request *http.Request) {
 	var signedUser *userModels.UserModel
 	signedUser = middlewareHandler.UserFromContext(request.Context())
 	log.Printf("Signed User: " + signedUser.Name)
-
-	if signedUser.Role.SubAdmin || signedUser.Role.Admin {
-		dishes, err := helper.FetchUserDishes(signedUser.ID)
-		if err != nil {
-			writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		jsonData, jsonErr := json.Marshal(dishes)
-		if jsonErr != nil {
-			writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		writer.Write(jsonData)
+	//if !signedUser.Role.SubAdmin && !signedUser.Role.Admin {
+	//	writer.WriteHeader(http.StatusUnauthorized)
+	//	return
+	//}
+	restaurantID := request.URL.Query().Get("restaurantID")
+	if len(restaurantID) == 0 {
+		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	writer.WriteHeader(http.StatusUnauthorized)
+
+	dishes, err := helper.FetchUserDishes(signedUser.ID, restaurantID)
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	jsonData, jsonErr := json.Marshal(dishes)
+	if jsonErr != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	writer.Write(jsonData)
 	return
 }

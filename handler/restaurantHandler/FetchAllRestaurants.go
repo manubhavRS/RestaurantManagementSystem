@@ -14,10 +14,10 @@ func FetchAllRestaurants(writer http.ResponseWriter, request *http.Request) {
 	signedUser = middlewareHandler.UserFromContext(request.Context())
 	log.Printf("Signed User: " + signedUser.Name)
 
-	if !signedUser.Role.Admin {
-		writer.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	//if !signedUser.Role.Admin {
+	//	writer.WriteHeader(http.StatusUnauthorized)
+	//	return
+	//}
 
 	restaurants, err := helper.AllRestaurants()
 	if err != nil {

@@ -23,6 +23,7 @@ func SigninUser(w http.ResponseWriter, r *http.Request) {
 	user, err := helper.SignInCredential(creds.Email)
 	ok := utilities.CheckPasswordHash(creds.Password, user.Password)
 	if !ok {
+		//log.Printf("Password Incorrect")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

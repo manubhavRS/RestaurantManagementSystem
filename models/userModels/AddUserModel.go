@@ -8,5 +8,5 @@ type AddUserModel struct {
 	Password  string                 `db:"password" json:"password"`
 	Role      []string               `db:"role" json:"role"`
 	Location  []models.LocationModel `db:"location" json:"location"`
-	CreatedBy string                 `db:"created_by" json:"created_by"`
+	CreatedBy string                 `db:"created_by" json:"createdBy"`
 }

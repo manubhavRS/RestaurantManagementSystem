@@ -22,13 +22,14 @@ func SetupRoutes() *Server {
 
 		api.Route("/auth", func(auth chi.Router) {
 			auth.Use(middlewareHandler.JWTAuthMiddleware)
-
+			auth.Use(middlewareHandler.AccessControlMiddleware)
 			auth.Route("/users", func(users chi.Router) {
 				users.Post("/sign-up", userHandler.AddUser)
 				users.Get("/all-users", userHandler.FetchUser)
 				users.Get("/fetch-users", userHandler.FetchSpecificUser)
 				users.Get("/fetch-subadmins", userHandler.FetchSubadminsUsers)
 				users.Post("/fetch-distance", userHandler.UserDistance)
+				users.Post("/add-roles", userHandler.AddPrivilege)
 			})
 
 			auth.Route("/restaurants", func(restaurants chi.Router) {
@@ -41,6 +42,7 @@ func SetupRoutes() *Server {
 				//dishes.Post("/fetch-restaurant-dishes", restaurantHandler.FetchDishes)
 				dishes.Get("/fetch-user-dishes", dishHandler.FetchSpecificDishes)
 				dishes.Post("/add-dish", dishHandler.AddDish)
+				dishes.Post("/upload", dishHandler.UploadFile)
 			})
 		})
 	})

@@ -14,21 +14,22 @@ func FetchSubadminsUsers(writer http.ResponseWriter, request *http.Request) {
 	signedUser = middlewareHandler.UserFromContext(request.Context())
 	log.Printf("Signed User: " + signedUser.Name)
 
-	if signedUser.Role.Admin {
-		users, userErr := helper.FetchSubadminsUser(signedUser.ID)
-		if userErr != nil {
-			writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		jsonData, jsonErr := json.Marshal(users)
-		if jsonErr != nil {
-			writer.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		writer.Write(jsonData)
+	//if signedUser.Role.Admin {
+	//	writer.WriteHeader(http.StatusUnauthorized)
+	//	return
+	//}
+	users, userErr := helper.FetchSubadminsUser(signedUser.ID)
+	if userErr != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	writer.WriteHeader(http.StatusUnauthorized)
+	jsonData, jsonErr := json.Marshal(users)
+	if jsonErr != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	writer.Write(jsonData)
 	return
+
 }

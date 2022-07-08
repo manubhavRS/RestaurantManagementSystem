@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/elgris/sqrl v0.0.0-20210727210741-7e0198b30236 // indirect
 	github.com/friendsofgo/errors v0.9.2 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

@@ -4,18 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 	"restaurantManagementSystem/database/helper"
-	"restaurantManagementSystem/models/restaurantModels"
 )
 
 func FetchDishes(writer http.ResponseWriter, request *http.Request) {
 
-	var restaurant restaurantModels.FetchRestaurantIDModel
-	addErr := json.NewDecoder(request.Body).Decode(&restaurant)
-	if addErr != nil {
+	restaurantID := request.URL.Query().Get("restaurantID")
+	if len(restaurantID) == 0 {
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	dishes, err := helper.FetchRestaurantDishes(restaurant.RestaurantID)
+	dishes, err := helper.FetchRestaurantDishes(restaurantID)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
